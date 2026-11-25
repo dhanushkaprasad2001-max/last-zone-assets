@@ -1,1 +1,0 @@
-<!doctype html><meta charset="utf-8"><title>App unavailable</title><p>This app could not be opened. Reload it to try again.</p><script>if(parent!==window)parent.postMessage({"type":"ecto:artifact-mini-app-load-status","version":1,"status":"error","stage":"authorize_view","reason":"authorization_denied"},"*")</script>
