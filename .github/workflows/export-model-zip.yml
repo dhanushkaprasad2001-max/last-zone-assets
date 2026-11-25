@@ -3,7 +3,7 @@ on:
   push:
     paths:
       - '.github/workflows/export-model-zip.yml'
-      - 'game-NERO-Full-Game-Pack.zip'
+      - 'game-LAST-ZONE-NERO-Pack.zip'
   workflow_dispatch:
 permissions:
   contents: read
@@ -15,15 +15,15 @@ jobs:
         uses: actions/checkout@v4
       - name: Verify model archive
         run: |
-          test -s game-NERO-Full-Game-Pack.zip
-          file game-NERO-Full-Game-Pack.zip
-          unzip -t game-NERO-Full-Game-Pack.zip
+          test -s game-LAST-ZONE-NERO-Pack.zip
+          file game-LAST-ZONE-NERO-Pack.zip
+          unzip -t game-LAST-ZONE-NERO-Pack.zip
       - name: List archive contents
-        run: unzip -Z1 game-NERO-Full-Game-Pack.zip
+        run: unzip -Z1 game-LAST-ZONE-NERO-Pack.zip
       - name: Upload original model archive
         uses: actions/upload-artifact@v4
         with:
           name: nero-model-source
-          path: game-NERO-Full-Game-Pack.zip
+          path: game-LAST-ZONE-NERO-Pack.zip
           if-no-files-found: error
           retention-days: 7
