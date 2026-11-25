@@ -1,0 +1,27 @@
+name: Export 3D model ZIP
+on:
+  push:
+    paths:
+      - '.github/workflows/export-model-zip.yml'
+      - 'NERO-3D-Model.zip'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  export-model:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out assets
+        uses: actions/checkout@v4
+      - name: Verify model archive
+        run: |
+          test -s NERO-3D-Model.zip
+          file NERO-3D-Model.zip
+          unzip -t NERO-3D-Model.zip
+      - name: Upload original model archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: nero-model-source
+          path: NERO-3D-Model.zip
+          if-no-files-found: error
+          retention-days: 7
