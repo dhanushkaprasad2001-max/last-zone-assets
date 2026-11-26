@@ -1,18 +1,24 @@
-name: Deploy NERO 3D Preview
+name: Deploy LAST ZONE Character Gallery
+
 on:
   push:
-    branches: [main]
+    branches: ["main"]
     paths:
-      - 'preview.html'
-      - '.github/workflows/deploy-nero-preview.yml'
+      - "preview.html"
+      - "characters.json"
+      - "characters/**"
+      - ".github/workflows/deploy-nero-preview.yml"
   workflow_dispatch:
+
 permissions:
   contents: read
   pages: write
   id-token: write
+
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
+
 jobs:
   deploy:
     environment:
@@ -22,18 +28,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-      - name: Prepare preview site
+
+      - name: Prepare gallery website
         run: |
           mkdir -p public
           cp preview.html public/index.html
+          cp characters.json public/characters.json
+          if [ -d characters ]; then
+            cp -R characters public/characters
+          fi
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: public
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
