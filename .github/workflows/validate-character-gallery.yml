@@ -1,0 +1,88 @@
+name: Validate LAST ZONE Character Gallery
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "preview.html"
+      - "characters.json"
+      - "Nero 1.zip"
+      - "characters/**"
+      - ".github/workflows/validate-character-gallery.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Check gallery JavaScript syntax
+        run: |
+          python3 - <<'PY'
+          import re
+          html = open("preview.html", encoding="utf-8").read()
+          scripts = re.findall(r"<script>([\\s\\S]*?)</script>", html, re.I)
+          if not scripts:
+              raise SystemExit("FAIL: inline gallery JavaScript was not found")
+          open("/tmp/gallery.js", "w", encoding="utf-8").write(scripts[-1])
+          print("PASS: extracted gallery JavaScript")
+          PY
+          node --check /tmp/gallery.js
+
+      - name: Validate character manifest and 3D model assets
+        run: |
+          python3 - <<'PY'
+          import json, os, re, struct, urllib.parse, zipfile
+          manifest = json.load(open("characters.json", encoding="utf-8"))
+          chars = manifest.get("characters")
+          if not isinstance(chars, list) or not chars:
+              raise SystemExit("FAIL: characters.json must contain a non-empty characters array")
+          ids = [c.get("id") for c in chars]
+          if len(ids) != len(set(ids)) or any(not isinstance(x, str) or not x for x in ids):
+              raise SystemExit("FAIL: character IDs must be unique non-empty strings")
+          for c in chars:
+              for key in ("id", "name", "source", "modelPath"):
+                  if not c.get(key):
+                      raise SystemExit(f"FAIL: {c.get('id', '(unknown)')} missing {key}")
+              if c["source"] == "zip":
+                  url = c.get("url", "")
+                  filename = urllib.parse.unquote(url.rsplit("/", 1)[-1])
+                  if not os.path.isfile(filename):
+                      raise SystemExit(f"FAIL: ZIP asset is not in repository: {filename}")
+                  with zipfile.ZipFile(filename) as z:
+                      bad = z.testzip()
+                      if bad:
+                          raise SystemExit(f"FAIL: ZIP CRC check failed at {bad}")
+                      try:
+                          data = z.read(c["modelPath"])
+                      except KeyError:
+                          raise SystemExit(f"FAIL: {c['name']} model path missing in ZIP: {c['modelPath']}")
+              elif c["source"] == "glb":
+                  path = c["modelPath"].lstrip("/")
+                  if not os.path.isfile(path):
+                      raise SystemExit(f"FAIL: GLB file missing from repository: {path}")
+                  data = open(path, "rb").read()
+              else:
+                  raise SystemExit(f"FAIL: unsupported source type for {c['name']}: {c['source']}")
+              if len(data) < 20 or data[:4] != b"glTF":
+                  raise SystemExit(f"FAIL: {c['name']} asset is not a GLB file")
+              version, total = struct.unpack_from("<II", data, 4)
+              if version != 2 or total != len(data):
+                  raise SystemExit(f"FAIL: {c['name']} GLB header or declared length is invalid")
+              chunk_len, chunk_type = struct.unpack_from("<II", data, 12)
+              if chunk_type != 0x4E4F534A or 20 + chunk_len > len(data):
+                  raise SystemExit(f"FAIL: {c['name']} GLB JSON chunk is invalid")
+              doc = json.loads(data[20:20+chunk_len].decode("utf-8").rstrip(" \\t\\r\\n\\0"))
+              print(f"PASS: {c['name']} | GLB v{version} | meshes={len(doc.get('meshes', []))} | animations={len(doc.get('animations', []))}")
+          print(f"PASS: all {len(chars)} character entries validated")
+          PY
