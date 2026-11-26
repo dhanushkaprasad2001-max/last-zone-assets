@@ -28,11 +28,28 @@ jobs:
         run: |
           mkdir -p characters/nero
           blender --background --python tools/build_nero.py -- --output characters/nero/nero.glb
-      - name: Commit generated model
+      - name: Point gallery to generated GLB
+        run: |
+          python3 - <<'PY'
+          import json
+          p = "characters.json"
+          with open(p, encoding="utf-8") as f:
+              data = json.load(f)
+          for c in data.get("characters", []):
+              if c.get("id") == "nero":
+                  c["source"] = "glb"
+                  c["modelPath"] = "./characters/nero/nero.glb"
+                  c.pop("url", None)
+                  c["role"] = "OPERATIVE · FIRST-PASS GAME MODEL"
+          with open(p, "w", encoding="utf-8") as f:
+              json.dump(data, f, ensure_ascii=False, indent=2)
+              f.write("\\n")
+          PY
+      - name: Commit generated model and gallery config
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add characters/nero/nero.glb
+          git add characters/nero/nero.glb characters.json
           if ! git diff --cached --quiet; then
             git commit -m "Build first-pass NERO 3D character GLB"
             git push
