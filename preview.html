@@ -61,17 +61,46 @@
     if(!file)throw Error('Model path not found in ZIP: '+c.modelPath);
     let modelBytes=new Uint8Array(await file.async('uint8array'));
     if(token!==loadToken)return;
-    // Repair invalid NUL padding at the end of the GLB JSON chunk.
-    if(modelBytes.length>=20 &&
-       modelBytes[0]===0x67 && modelBytes[1]===0x6c &&
-       modelBytes[2]===0x54 && modelBytes[3]===0x46){
-     const glbView=new DataView(modelBytes.buffer,modelBytes.byteOffset,modelBytes.byteLength);
-     const jsonLength=glbView.getUint32(12,true);
-     const jsonType=glbView.getUint32(16,true);
-     const jsonEnd=20+jsonLength;
-     if(glbView.getUint32(4,true)===2 && jsonType===0x4e4f534a && jsonEnd<=modelBytes.length){
-      for(let i=jsonEnd-1;i>=20 && modelBytes[i]===0;i--)modelBytes[i]=0x20;
-     }
+    // Repair exporter defects: NUL-padded JSON and missing POSITION bounds.
+    if(modelBytes.length>=20 && modelBytes[0]===0x67 && modelBytes[1]===0x6c && modelBytes[2]===0x54 && modelBytes[3]===0x46){
+     const dv=new DataView(modelBytes.buffer,modelBytes.byteOffset,modelBytes.byteLength);
+     const jsonLen=dv.getUint32(12,true), jsonEnd=20+jsonLen;
+     if(dv.getUint32(4,true)!==2 || dv.getUint32(16,true)!==0x4e4f534a || jsonEnd>modelBytes.length)throw Error('Invalid GLB JSON chunk');
+     const jsonText=new TextDecoder().decode(modelBytes.slice(20,jsonEnd)).replace(/\\0+$/g,'').trimEnd();
+     const doc=JSON.parse(jsonText);
+     const binHeader=jsonEnd;
+     if(binHeader+8>modelBytes.length)throw Error('GLB binary chunk is missing');
+     const binLen=dv.getUint32(binHeader,true), binType=dv.getUint32(binHeader+4,true);
+     if(binType!==0x004e4942 || binHeader+8+binLen>modelBytes.length)throw Error('Invalid GLB binary chunk');
+     const binStart=binHeader+8;
+     (doc.meshes||[]).forEach(mesh=>(mesh.primitives||[]).forEach(prim=>{
+      const ai=prim.attributes&&prim.attributes.POSITION;
+      if(ai===undefined)return;
+      const a=doc.accessors[ai];
+      if(!a || (a.min&&a.max))return;
+      if(a.componentType!==5126 || a.type!=='VEC3')throw Error('Unsupported POSITION accessor format');
+      const bv=doc.bufferViews[a.bufferView];
+      if(!bv)throw Error('POSITION buffer view missing');
+      const stride=bv.byteStride||12, start=binStart+(bv.byteOffset||0)+(a.byteOffset||0);
+      const min=[Infinity,Infinity,Infinity], max=[-Infinity,-Infinity,-Infinity];
+      for(let n=0;n<a.count;n++)for(let k=0;k<3;k++){
+       const v=dv.getFloat32(start+n*stride+k*4,true);
+       if(!Number.isFinite(v))throw Error('Invalid POSITION vertex value');
+       min[k]=Math.min(min[k],v); max[k]=Math.max(max[k],v);
+      }
+      a.min=min; a.max=max;
+     }));
+     const jsonBytes=new TextEncoder().encode(JSON.stringify(doc));
+     const paddedJsonLen=Math.ceil(jsonBytes.length/4)*4;
+     const paddedBinLen=Math.ceil(binLen/4)*4;
+     const total=12+8+paddedJsonLen+8+paddedBinLen;
+     const repaired=new Uint8Array(total), out=new DataView(repaired.buffer);
+     repaired.set([0x67,0x6c,0x54,0x46],0); out.setUint32(4,total,true);
+     out.setUint32(8,2,true); out.setUint32(12,paddedJsonLen,true); out.setUint32(16,0x4e4f534a,true);
+     repaired.set(jsonBytes,20); repaired.fill(0x20,20+jsonBytes.length,20+paddedJsonLen);
+     const binHead=20+paddedJsonLen; out.setUint32(binHead,paddedBinLen,true); out.setUint32(binHead+4,0x004e4942,true);
+     repaired.set(modelBytes.slice(binStart,binStart+binLen),binHead+8);
+     modelBytes=repaired;
     }
     currentObjectUrl=URL.createObjectURL(new Blob([modelBytes],{type:'model/gltf-binary'}));
     modelUrl=currentObjectUrl;
