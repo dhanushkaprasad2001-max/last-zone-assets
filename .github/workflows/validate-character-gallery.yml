@@ -124,7 +124,7 @@ jobs:
           const json = Buffer.from(JSON.stringify(doc), 'utf8');
           const jsonPad = Math.ceil(json.length / 4) * 4, binPad = Math.ceil(binLen / 4) * 4;
           const out = Buffer.alloc(12 + 8 + jsonPad + 8 + binPad);
-          out.write('glTF', 0); out.writeUInt32LE(out.length, 4); out.writeUInt32LE(2, 8);
+          out.write('glTF', 0); out.writeUInt32LE(2, 4); out.writeUInt32LE(out.length, 8);
           out.writeUInt32LE(jsonPad, 12); out.writeUInt32LE(0x4e4f534a, 16);
           json.copy(out, 20, 0); out.fill(0x20, 20 + json.length, 20 + jsonPad);
           const binHead = 20 + jsonPad; out.writeUInt32LE(binPad, binHead); out.writeUInt32LE(0x004e4942, binHead + 4);
