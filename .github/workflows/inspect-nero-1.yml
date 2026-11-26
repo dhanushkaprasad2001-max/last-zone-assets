@@ -87,10 +87,8 @@ jobs:
         run: |
           set -e
           sudo apt-get update
-          sudo apt-get install -y blender
-          # Install NumPy into Blender's own Python runtime (not the runner's system Python).
-          blender --background --python-expr "import ensurepip; ensurepip.bootstrap()"
-          blender --background --python-expr "import subprocess,sys; subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--upgrade', 'numpy'])"
+          sudo apt-get install -y blender python3-numpy
+          blender --background --python-expr "import numpy; print('Blender NumPy:', numpy.__version__)"
           mkdir -p extracted
           python3 - <<'PY'
           import zipfile
