@@ -7,6 +7,7 @@ on:
       - "preview.html"
       - "characters.json"
       - "Nero 1.zip"
+      - " Nero 2.zip"
       - "characters/**"
       - ".github/workflows/validate-character-gallery.yml"
   workflow_dispatch:
@@ -31,7 +32,7 @@ jobs:
           python3 - <<'PY'
           import re
           html = open("preview.html", encoding="utf-8").read()
-          scripts = re.findall(r"<script>([\s\S]*?)</script>", html, re.I)
+          scripts = re.findall(r"<script>([\\s\\S]*?)</script>", html, re.I)
           if not scripts:
               raise SystemExit("FAIL: inline gallery JavaScript was not found")
           open("/tmp/gallery.js", "w", encoding="utf-8").write(scripts[-1])
@@ -39,7 +40,7 @@ jobs:
           PY
           node --check /tmp/gallery.js
 
-      - name: Validate character manifest and 3D model assets
+      - name: Validate character manifest and GLB headers
         run: |
           python3 - <<'PY'
           import json, os, struct, urllib.parse, zipfile
@@ -55,8 +56,7 @@ jobs:
                   if not c.get(key):
                       raise SystemExit(f"FAIL: {c.get('id', '(unknown)')} missing {key}")
               if c["source"] == "zip":
-                  url = c.get("url", "")
-                  filename = urllib.parse.unquote(url.rsplit("/", 1)[-1])
+                  filename = urllib.parse.unquote(c.get("url", "").rsplit("/", 1)[-1])
                   if not os.path.isfile(filename):
                       raise SystemExit(f"FAIL: ZIP asset is not in repository: {filename}")
                   with zipfile.ZipFile(filename) as z:
@@ -82,7 +82,26 @@ jobs:
               chunk_len, chunk_type = struct.unpack_from("<II", data, 12)
               if chunk_type != 0x4E4F534A or 20 + chunk_len > len(data):
                   raise SystemExit(f"FAIL: {c['name']} GLB JSON chunk is invalid")
-              doc = json.loads(data[20:20+chunk_len].decode("utf-8").rstrip(" \t\r\n\0"))
+              doc = json.loads(data[20:20+chunk_len].decode("utf-8").rstrip(" \\t\\r\\n\\0"))
+              open("/tmp/character.glb", "wb").write(data)
               print(f"PASS: {c['name']} | GLB v{version} | meshes={len(doc.get('meshes', []))} | animations={len(doc.get('animations', []))}")
-          print(f"PASS: all {len(chars)} character entries validated")
+          print(f"PASS: all {len(chars)} character entries passed header checks")
           PY
+
+      - name: Run Khronos glTF Validator
+        run: |
+          npm install --no-save gltf-validator
+          node - <<'JS'
+          const fs = require('fs');
+          const validator = require('gltf-validator');
+          const bytes = new Uint8Array(fs.readFileSync('/tmp/character.glb'));
+          validator.validateBytes(bytes, {uri: 'character.glb'}).then(report => {
+            console.log(JSON.stringify(report.issues, null, 2));
+            console.log('Khronos glTF validation errors:', report.issues.numErrors);
+            console.log('Khronos glTF validation warnings:', report.issues.numWarnings);
+            if (report.issues.numErrors > 0) process.exit(1);
+          }).catch(error => {
+            console.error(error);
+            process.exit(1);
+          });
+          JS
