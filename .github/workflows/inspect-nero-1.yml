@@ -83,6 +83,74 @@ jobs:
           print(report)
           open("Nero-1-inspection-report.txt","w").write(report)
           PY
+      - name: Blender application-level import and rig checks
+        run: |
+          set -e
+          sudo apt-get update
+          sudo apt-get install -y blender
+          mkdir -p extracted
+          python3 - <<'PY'
+          import zipfile
+          with zipfile.ZipFile("Nero 1.zip") as z:
+              z.extractall("extracted")
+          PY
+          cat > blender_check.py <<'PY'
+          import bpy, os, sys
+          root=os.path.abspath("extracted/NERO_FINAL")
+          report=["BLENDER HEADLESS IMPORT VALIDATION","="*38]
+          targets=[
+            ("GLB main","Models/NERO_Final.glb","glb"),
+            ("GLB LOD0","Models/NERO_LOD0.glb","glb"),
+            ("GLB LOD1","Models/NERO_LOD1.glb","glb"),
+            ("GLB LOD2","Models/NERO_LOD2.glb","glb"),
+            ("GLB rifle","Weapons/Rifle_Model.glb","glb"),
+            ("FBX main","Models/NERO_Final.fbx","fbx"),
+            ("FBX rifle","Weapons/Rifle_Model.fbx","fbx")]
+          for label,rel,kind in targets:
+            path=os.path.join(root,rel)
+            bpy.ops.wm.read_factory_settings(use_empty=True)
+            report.append("\n"+label+": "+rel)
+            try:
+              if kind=="glb": bpy.ops.import_scene.gltf(filepath=path)
+              else: bpy.ops.import_scene.fbx(filepath=path)
+              objs=list(bpy.context.scene.objects)
+              meshes=[o for o in objs if o.type=="MESH"]
+              arms=[o for o in objs if o.type=="ARMATURE"]
+              actions=list(bpy.data.actions)
+              verts=sum(len(o.data.vertices) for o in meshes)
+              polys=sum(len(o.data.polygons) for o in meshes)
+              tris=sum(sum(1 for _ in p.vertices) - 2 for o in meshes for p in o.data.polygons)
+              bones=sum(len(a.data.bones) for a in arms)
+              mats=sum(len(o.data.materials) for o in meshes)
+              groups=sum(len(o.vertex_groups) for o in meshes)
+              weighted=0; max_influences=0
+              for o in meshes:
+                for v in o.data.vertices:
+                  influences=sum(1 for g in v.groups if g.weight>0.00001)
+                  if influences: weighted+=1
+                  max_influences=max(max_influences,influences)
+              report.append("IMPORT: PASS")
+              report.append(f"Objects={len(objs)} meshes={len(meshes)} vertices={verts} polygons={polys} approx_triangles={tris}")
+              report.append(f"Armatures={len(arms)} bones={bones} actions={len(actions)} materialslots={mats} vertex_groups={groups}")
+              report.append(f"Vertices with weights={weighted}/{verts} max_influences_per_vertex={max_influences}")
+              report.append("Actions: "+", ".join(a.name for a in actions[:45]))
+              report.append("Mesh objects: "+", ".join(o.name for o in meshes[:20]))
+              if not meshes: report.append("WARNING: no mesh geometry imported")
+              if kind=="fbx" and not arms: report.append("WARNING: FBX import has no armature")
+            except Exception as e:
+              report.append("IMPORT: FAIL - "+repr(e))
+          open("Blender-validation-report.txt","w").write("\n".join(report))
+          print("\n".join(report))
+          PY
+          blender --background --python blender_check.py 2>&1 | tee blender-run.log
+          cat Blender-validation-report.txt >> Nero-1-inspection-report.txt
+      - name: Upload Blender validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: nero-1-blender-validation
+          path: Blender-validation-report.txt
+          if-no-files-found: error
+          retention-days: 7
       - name: Upload inspection report
         uses: actions/upload-artifact@v4
         with:
