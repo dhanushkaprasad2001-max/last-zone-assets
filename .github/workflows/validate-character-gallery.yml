@@ -7,6 +7,7 @@ on:
       - "preview.html"
       - "characters.json"
       - "Nero 1.zip"
+      - "Nero.zip"
       - " Nero 2.zip"
       - "characters/**"
       - ".github/workflows/validate-character-gallery.yml"
@@ -26,6 +27,26 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+
+      - name: Inspect Nero.zip model assets
+        run: |
+          python3 - <<'PY'
+          import zipfile, struct, json
+          with zipfile.ZipFile('Nero.zip') as z:
+              print('Nero.zip entries:')
+              for info in z.infolist():
+                  print(f"{info.file_size:>10} bytes  {info.filename}")
+                  if info.filename.lower().endswith('.glb'):
+                      data=z.read(info.filename)
+                      print('  GLB header:', data[:4], 'version/length:', struct.unpack_from('<II',data,4) if len(data)>=12 else 'too short')
+                      if len(data)>=20 and data[:4]==b'glTF':
+                          n,typ=struct.unpack_from('<II',data,12)
+                          try:
+                              doc=json.loads(data[20:20+n].rstrip(b'\\0 ').decode('utf-8'))
+                              missing=sum(1 for m in doc.get('meshes',[]) for p in m.get('primitives',[]) if (a:=p.get('attributes',{}).get('POSITION')) is not None and ('min' not in doc.get('accessors',[])[a] or 'max' not in doc.get('accessors',[])[a]))
+                              print('  JSON parsed; meshes:',len(doc.get('meshes',[])),'animations:',len(doc.get('animations',[])),'POSITION accessors missing bounds:',missing)
+                          except Exception as e: print('  JSON parse issue:',repr(e))
+          PY
 
       - name: Check gallery JavaScript syntax
         run: |
