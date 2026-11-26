@@ -38,22 +38,15 @@ for folder, _, files in os.walk(asset_root):
         json.loads(bytes(data[20:20+chunk_len]).decode("utf-8"))
 repair_notes.append("All GLB JSON chunks parse and use valid space padding.")
 
-# Rebuild character FBX from the authoritative, imported GLB so the old duplicate FBX is not retained.
-bpy.ops.wm.read_factory_settings(use_empty=True)
+# Preserve the supplied FBX source. Blender 5's FBX exporter is no longer
+# available with the legacy operator properties used by older Blender releases.
+# The authoritative GLB remains the model used for automated validation.
 main_glb = os.path.join(asset_root, "Models", "NERO_Final.glb")
-bpy.ops.import_scene.gltf(filepath=main_glb)
-character_objects = list(bpy.context.scene.objects)
-character_meshes = [o for o in character_objects if o.type == "MESH"]
-character_rigs = [o for o in character_objects if o.type == "ARMATURE"]
-if not character_meshes or not character_rigs:
-    raise RuntimeError("Main NERO GLB did not import with mesh and armature.")
-bpy.ops.object.select_all(action="DESELECT")
-for obj in character_objects:
-    obj.select_set(True)
-bpy.context.view_layer.objects.active = character_rigs[0]
-fbx_path = os.path.join(asset_root, "Models", "NERO_Final.fbx")
-bpy.ops.export_scene.fbx(filepath=fbx_path, use_selection=True, object_types={'ARMATURE','MESH'}, add_leaf_bones=False, bake_anim=True, bake_anim_use_all_actions=True, path_mode='COPY', embed_textures=True)
-repair_notes.append("Re-exported NERO_Final.fbx from the imported rigged GLB using Blender.")
+original_fbx = os.path.join(asset_root, "Models", "NERO_Final.fbx")
+if os.path.isfile(original_fbx):
+    repair_notes.append("Preserved original NERO_Final.fbx unchanged; FBX export is not run in this Blender 5 workflow.")
+else:
+    repair_notes.append("No source NERO_Final.fbx was present; GLB remains the authoritative character asset.")
 
 # Build a distinct, original, low-poly tactical rifle mesh. It is a separate weapon asset,
 # designed to attach to the NERO weapon socket in Unity; it is not a copy of the character.
@@ -120,10 +113,8 @@ rifle=bpy.context.object; rifle.name="LAST_ZONE_Rifle_Assault_01"
 # Origin at receiver centre; all geometry stays in one mesh for simple socket attachment.
 bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
 rifle_path_glb=os.path.join(asset_root,"Weapons","Rifle_Model.glb")
-rifle_path_fbx=os.path.join(asset_root,"Weapons","Rifle_Model.fbx")
 os.makedirs(os.path.dirname(rifle_path_glb),exist_ok=True)
 bpy.ops.export_scene.gltf(filepath=rifle_path_glb, export_format='GLB', use_selection=True, export_apply=True)
-bpy.ops.export_scene.fbx(filepath=rifle_path_fbx, use_selection=True, object_types={'MESH'}, add_leaf_bones=False, path_mode='AUTO')
 repair_notes.append("Replaced duplicate Rifle_Model files with a separate low-poly tactical rifle mesh (receiver, barrel, muzzle, stock, grip, magazine, rail and sights).")
 repair_notes.append("Rifle is a standalone mesh; attach it to Weapon_Attach_R_Hand / Weapon_Attach_L_Hand in Unity and align using the game's weapon socket transforms.")
 
@@ -148,7 +139,7 @@ open(os.path.join(docs,"Known_Issues.txt"),"w").write(
 "- Face is stylized low-poly; AAA sculpt/detail pass is outside this automated repair.\n")
 open(os.path.join(docs,"Rifle_Integration.txt"),"w").write(
 "RIFLE MODEL: LAST_ZONE_Rifle_Assault_01\n"
-"Files: Weapons/Rifle_Model.glb and Weapons/Rifle_Model.fbx\n"
+File: Weapons/Rifle_Model.glb\n
 "Standalone low-poly tactical rifle mesh with separate material slots.\n"
 "Attach to NERO skeleton Weapon_Attach_R_Hand. Use Weapon_Attach_L_Hand for left-hand support alignment.\n"
 "Unity must set the final local position/rotation/scale per the game's weapon socket convention; validate ADS and muzzle direction in-game.\n")
