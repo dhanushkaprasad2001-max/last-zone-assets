@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>LAST ZONE — NERO Character Preview</title>
+<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 32%,#29333a 0,#111820 48%,#080c11 100%);color:#f3f5f6;font:15px system-ui,-apple-system,sans-serif;min-height:100svh}.top{padding:18px 18px 10px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ffffff18}.brand{font-weight:900;letter-spacing:.18em}.tag{font-size:11px;color:#a9b4bd;letter-spacing:.16em}.stage{height:min(70svh,720px);min-height:420px;position:relative}model-viewer{width:100%;height:100%;--poster-color:transparent;background:transparent;--progress-bar-color:#c5a66a;--progress-mask:transparent}.hud{position:absolute;left:16px;top:18px;pointer-events:none}.name{font-size:clamp(28px,7vw,48px);font-weight:900;letter-spacing:.08em;text-shadow:0 2px 18px #000}.sub{color:#c6a86d;font-size:11px;letter-spacing:.22em}.bottom{padding:14px 16px max(22px,env(safe-area-inset-bottom));background:#080d12d9;border-top:1px solid #ffffff18}.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.btn,select{background:#202a32;color:#fff;border:1px solid #52606b;border-radius:8px;padding:11px 14px;font-weight:650}.btn:active{background:#3a4853}.primary{background:#9a7b45;border-color:#c4a66b;color:#101418}.small{font-size:12px;color:#aab4bd;margin:10px 0 0}.status{font-size:12px;color:#d4bd8b;margin-top:8px}.selectwrap{display:flex;align-items:center;gap:8px;margin-top:12px;color:#adb8c0;font-size:12px}.selectwrap select{flex:1;min-width:0}.cross{position:absolute;bottom:18px;right:16px;color:#ffffff65;font-size:10px;letter-spacing:.15em;pointer-events:none}@media(min-width:760px){.stage{height:72vh}.bottom{padding-left:max(24px,calc((100vw - 900px)/2));padding-right:max(24px,calc((100vw - 900px)/2))}}
+</style>
+</head>
+<body>
+<header class="top"><div><div class="brand">LAST ZONE</div><div class="tag">CHARACTER INSPECTION</div></div><div class="tag">NERO / 01</div></header>
+<main><section class="stage"><div class="hud"><div class="sub">OPERATIVE</div><div class="name">NERO</div></div>
+<model-viewer id="viewer" camera-controls touch-action="pan-y" interaction-prompt="auto" auto-rotate rotation-per-second="18deg" shadow-intensity="1" exposure="1" environment-image="neutral" camera-orbit="0deg 75deg 3.2m" min-camera-orbit="auto 20deg auto" max-camera-orbit="auto 150deg auto" field-of-view="30deg" alt="NERO 3D character model preview">
+<div slot="progress-bar" style="position:absolute;bottom:0;height:3px;background:#c5a66a;width:var(--progress-bar-width)"></div></model-viewer><div class="cross">DRAG TO ROTATE · PINCH TO ZOOM</div></section>
+<section class="bottom"><div class="row"><button class="btn primary" id="rotate">AUTO ROTATE: ON</button><button class="btn" id="reset">RESET VIEW</button><button class="btn" id="play">PLAY ANIMATION</button><button class="btn" id="pause">PAUSE</button></div>
+<div class="selectwrap">ANIMATION <select id="animations"><option value="">Loading animations…</option></select></div>
+<div class="status" id="status">Loading original NERO model from the project ZIP…</div><p class="small">This preview loads the original model asset. It does not alter the game files. Final in-game appearance may differ depending on the game's lighting, shaders, camera and equipment setup.</p></section></main>
+<script>
+const ZIP_URL='https://raw.githubusercontent.com/dhanushkaprasad2001-max/last-zone-assets/main/Nero%201.zip';
+const MODEL_PATH='NERO_FINAL/Models/NERO_Final.glb';
+const viewer=document.querySelector('#viewer'),status=document.querySelector('#status'),sel=document.querySelector('#animations');
+(async()=>{try{status.textContent='Downloading NERO asset package…';const res=await fetch(ZIP_URL);if(!res.ok)throw Error('Could not download the project ZIP ('+res.status+').');const zip=await JSZip.loadAsync(await res.arrayBuffer());const file=zip.file(MODEL_PATH);if(!file)throw Error('NERO_Final.glb was not found at the expected path in the ZIP.');status.textContent='Preparing 3D character…';const blob=await file.async('blob');viewer.src=URL.createObjectURL(blob);viewer.addEventListener('load',()=>{const names=viewer.availableAnimations||[];sel.innerHTML='';if(!names.length){sel.add(new Option('No animations found',''));status.textContent='Model loaded. No animation clips were exposed by the viewer.';}else{sel.add(new Option('Select animation…',''));names.forEach(n=>sel.add(new Option(n,n)));status.textContent='NERO model loaded · '+names.length+' animation clips detected.';}},{once:true});viewer.addEventListener('error',()=>status.textContent='The GLB could not be rendered. Please retry or inspect the model file.',{once:true});}catch(e){status.textContent='Preview error: '+e.message;}})();
+document.querySelector('#rotate').onclick=()=>{viewer.autoRotate=!viewer.autoRotate;document.querySelector('#rotate').textContent='AUTO ROTATE: '+(viewer.autoRotate?'ON':'OFF')};
+document.querySelector('#reset').onclick=()=>{viewer.cameraOrbit='0deg 75deg 3.2m';viewer.fieldOfView='30deg';viewer.jumpCameraToGoal()};
+document.querySelector('#play').onclick=()=>{const n=sel.value||sel.options[1]?.value;if(n){sel.value=n;viewer.animationName=n;viewer.play();}};
+document.querySelector('#pause').onclick=()=>viewer.pause();
+sel.onchange=()=>{if(sel.value){viewer.animationName=sel.value;viewer.play();}};
+</script></body></html>
