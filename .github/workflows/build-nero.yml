@@ -1,0 +1,39 @@
+name: Build LAST ZONE NERO 3D Asset
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "tools/build_nero.py"
+      - "LAST_ZONE_NERO_PreProduction_v01.zip"
+      - ".github/workflows/build-nero.yml"
+permissions:
+  contents: write
+jobs:
+  build-nero:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install Blender
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender
+      - name: Inspect and extract NERO source pack
+        run: |
+          mkdir -p source
+          unzip -o LAST_ZONE_NERO_PreProduction_v01.zip -d source
+          echo "Source pack files:"
+          find source -maxdepth 3 -type f -print
+      - name: Build first-pass NERO GLB
+        run: |
+          mkdir -p characters/nero
+          blender --background --python tools/build_nero.py -- --output characters/nero/nero.glb
+      - name: Commit generated model
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add characters/nero/nero.glb
+          if ! git diff --cached --quiet; then
+            git commit -m "Build first-pass NERO 3D character GLB"
+            git push
+          fi
