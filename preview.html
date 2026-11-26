@@ -59,9 +59,21 @@
     const zip=await JSZip.loadAsync(await response.arrayBuffer());
     const file=zip.file(c.modelPath);
     if(!file)throw Error('Model path not found in ZIP: '+c.modelPath);
-    const blob=await file.async('blob');
+    let modelBytes=new Uint8Array(await file.async('uint8array'));
     if(token!==loadToken)return;
-    currentObjectUrl=URL.createObjectURL(new Blob([blob],{type:'model/gltf-binary'}));
+    // Repair invalid NUL padding at the end of the GLB JSON chunk.
+    if(modelBytes.length>=20 &&
+       modelBytes[0]===0x67 && modelBytes[1]===0x6c &&
+       modelBytes[2]===0x54 && modelBytes[3]===0x46){
+     const glbView=new DataView(modelBytes.buffer,modelBytes.byteOffset,modelBytes.byteLength);
+     const jsonLength=glbView.getUint32(12,true);
+     const jsonType=glbView.getUint32(16,true);
+     const jsonEnd=20+jsonLength;
+     if(glbView.getUint32(4,true)===2 && jsonType===0x4e4f534a && jsonEnd<=modelBytes.length){
+      for(let i=jsonEnd-1;i>=20 && modelBytes[i]===0;i--)modelBytes[i]=0x20;
+     }
+    }
+    currentObjectUrl=URL.createObjectURL(new Blob([modelBytes],{type:'model/gltf-binary'}));
     modelUrl=currentObjectUrl;
    }else if(c.source==='glb'){
     modelUrl=c.modelPath;
