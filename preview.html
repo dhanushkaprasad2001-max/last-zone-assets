@@ -1,57 +1,130 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101820">
 <title>LAST ZONE — 3D Character Gallery</title>
 <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <style>
-:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 30%,#29343c 0,#111820 52%,#080c11 100%);color:#f3f5f6;font:15px system-ui,-apple-system,sans-serif;min-height:100svh}.top{padding:18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ffffff20}.brand{font-weight:950;letter-spacing:.2em}.tag{font-size:10px;color:#a9b4bd;letter-spacing:.17em}.stage{height:min(67svh,720px);min-height:390px;position:relative}model-viewer{width:100%;height:100%;--poster-color:transparent;background:transparent;--progress-bar-color:#c5a66a}.hud{position:absolute;left:18px;top:18px;pointer-events:none}.name{font-size:clamp(30px,8vw,52px);font-weight:950;letter-spacing:.08em;text-shadow:0 2px 18px #000}.sub{color:#c6a86d;font-size:10px;letter-spacing:.22em}.cross{position:absolute;bottom:16px;right:16px;color:#ffffff75;font-size:9px;letter-spacing:.15em;pointer-events:none}.panel{padding:16px;background:#080d12eF;border-top:1px solid #ffffff20}.field{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.field label{font-size:11px;color:#c6a86d;letter-spacing:.12em}select,.btn{background:#202a32;color:#fff;border:1px solid #52606b;border-radius:8px;padding:11px 13px;font-weight:650}select{flex:1;min-width:180px}.btn.primary{background:#9a7b45;border-color:#c4a66b;color:#101418}.btn:active{background:#3b4a55}.tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.status{font-size:12px;color:#d4bd8b;margin-top:10px;min-height:18px}.note{font-size:11px;line-height:1.5;color:#aab4bd;margin:10px 0 0}.foot{padding:0 16px 20px;color:#76838d;font-size:10px;letter-spacing:.08em}@media(min-width:760px){.stage{height:72vh}.panel{padding-left:max(24px,calc((100vw - 900px)/2));padding-right:max(24px,calc((100vw - 900px)/2))}}
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 30%,#29343c 0,#111820 52%,#080c11 100%);color:#f3f5f6;font:15px system-ui,-apple-system,sans-serif;min-height:100svh}.top{padding:18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ffffff20}.brand{font-weight:950;letter-spacing:.2em}.tag{font-size:10px;color:#a9b4bd;letter-spacing:.17em}.stage{height:min(67svh,720px);min-height:390px;position:relative}model-viewer{width:100%;height:100%;--poster-color:transparent;background:transparent;--progress-bar-color:#c5a66a}.hud{position:absolute;left:18px;top:18px;pointer-events:none}.name{font-size:clamp(30px,8vw,52px);font-weight:950;letter-spacing:.08em;text-shadow:0 2px 18px #000}.sub{color:#c6a86d;font-size:10px;letter-spacing:.22em}.cross{position:absolute;bottom:16px;right:16px;color:#ffffff75;font-size:9px;letter-spacing:.15em;pointer-events:none}.panel{padding:16px;background:#080d12ef;border-top:1px solid #ffffff20}.field{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.field label{font-size:11px;color:#c6a86d;letter-spacing:.12em}select,.btn{background:#202a32;color:#fff;border:1px solid #52606b;border-radius:8px;padding:11px 13px;font-weight:650}select{flex:1;min-width:180px}.btn.primary{background:#9a7b45;border-color:#c4a66b;color:#101418}.btn:active{background:#3b4a55}.tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.status{font-size:12px;color:#d4bd8b;margin-top:10px;min-height:18px}.note{font-size:11px;line-height:1.5;color:#aab4bd;margin:10px 0 0}.foot{padding:0 16px 20px;color:#76838d;font-size:10px;letter-spacing:.08em}@media(min-width:760px){.stage{height:72vh}.panel{padding-left:max(24px,calc((100vw - 900px)/2));padding-right:max(24px,calc((100vw - 900px)/2))}}
 </style>
 </head>
 <body>
 <header class="top"><div><div class="brand">LAST ZONE</div><div class="tag">3D CHARACTER GALLERY</div></div><div class="tag">MODEL INSPECTION</div></header>
-<main><section class="stage"><div class="hud"><div class="sub" id="role">OPERATIVE</div><div class="name" id="name">LOADING</div></div>
+<main>
+<section class="stage">
+<div class="hud"><div class="sub" id="role">OPERATIVE</div><div class="name" id="name">LOADING</div></div>
 <model-viewer id="viewer" camera-controls touch-action="pan-y" interaction-prompt="auto" auto-rotate rotation-per-second="18deg" shadow-intensity="1" exposure="1" environment-image="neutral" camera-orbit="0deg 75deg 3.2m" min-camera-orbit="auto 20deg auto" max-camera-orbit="auto 150deg auto" field-of-view="30deg" alt="LAST ZONE 3D character preview"></model-viewer>
-<div class="cross">DRAG TO ROTATE · PINCH TO ZOOM</div></section>
-<section class="panel"><div class="field"><label for="character">SELECT CHARACTER</label><select id="character"><option>Loading characters…</option></select></div>
-<div class="tools"><button class="btn primary" id="rotate">AUTO ROTATE: ON</button><button class="btn" id="reset">RESET VIEW</button><button class="btn" id="play">PLAY ANIMATION</button><button class="btn" id="pause">PAUSE</button></div>
-<div class="field" style="margin-top:12px"><label for="animations">ANIMATION</label><select id="animations"><option value="">Waiting for model…</option></select></div>
-<div class="status" id="status">Loading character list…</div>
-<p class="note">This gallery displays the original 3D model assets. In-game appearance can differ because of game lighting, shaders, equipment and camera settings. New characters can be added by uploading a GLB model and adding one entry to characters.json.</p></section></main>
+<div class="cross">DRAG TO ROTATE · PINCH TO ZOOM</div>
+</section>
+<section class="panel">
+<div class="field"><label for="character">SELECT CHARACTER</label><select id="character" disabled><option>Loading characters…</option></select></div>
+<div class="tools"><button class="btn primary" id="rotate" type="button">AUTO ROTATE: ON</button><button class="btn" id="reset" type="button">RESET VIEW</button><button class="btn" id="play" type="button">PLAY ANIMATION</button><button class="btn" id="pause" type="button">PAUSE</button></div>
+<div class="field" style="margin-top:12px"><label for="animations">ANIMATION</label><select id="animations" disabled><option value="">Waiting for model…</option></select></div>
+<div class="status" id="status" role="status" aria-live="polite">Starting 3D viewer…</div>
+<p class="note">This gallery displays original 3D model assets. In-game appearance may differ because of game lighting, shaders, equipment and camera settings. To add a character, upload its GLB to the characters folder and add an entry to characters.json.</p>
+</section>
+</main>
 <div class="foot">LAST ZONE · CHARACTER DEVELOPMENT PREVIEW</div>
 <script>
-const viewer=document.querySelector('#viewer'),statusEl=document.querySelector('#status'),characterSelect=document.querySelector('#character'),animationSelect=document.querySelector('#animations');
-let characters=[];
-function setStatus(s){statusEl.textContent=s}
-async function loadCharacter(c){
- document.querySelector('#name').textContent=c.name;
- document.querySelector('#role').textContent=c.role||'CHARACTER';
- animationSelect.innerHTML='<option value="">Loading animations…</option>';
- viewer.pause();viewer.removeAttribute('src');setStatus('Loading '+c.name+' 3D model…');
- try{
-  let modelBlob;
-  if(c.source==='zip'){
-   const response=await fetch(c.url);if(!response.ok)throw Error('Asset download failed ('+response.status+').');
-   const zip=await JSZip.loadAsync(await response.arrayBuffer());const file=zip.file(c.modelPath);
-   if(!file)throw Error('Model file was not found inside the ZIP.');
-   modelBlob=await file.async('blob');viewer.src=URL.createObjectURL(modelBlob);
-  }else{
-   viewer.src='./'+c.modelPath.replace(/^\//,'');
+(async()=>{
+ const viewer=document.querySelector('#viewer');
+ const statusEl=document.querySelector('#status');
+ const characterSelect=document.querySelector('#character');
+ const animationSelect=document.querySelector('#animations');
+ const rotateButton=document.querySelector('#rotate');
+ let characters=[];
+ let currentObjectUrl=null;
+ let loadToken=0;
+ const setStatus=s=>{statusEl.textContent=s};
+ const revokeModelUrl=()=>{if(currentObjectUrl){URL.revokeObjectURL(currentObjectUrl);currentObjectUrl=null}};
+ async function loadCharacter(c){
+  const token=++loadToken;
+  document.querySelector('#name').textContent=c.name;
+  document.querySelector('#role').textContent=c.role||'CHARACTER';
+  animationSelect.disabled=true;
+  animationSelect.innerHTML='<option value="">Loading animations…</option>';
+  viewer.pause();
+  viewer.removeAttribute('src');
+  revokeModelUrl();
+  setStatus('Loading '+c.name+' 3D model…');
+  try{
+   let modelUrl;
+   if(c.source==='zip'){
+    if(typeof JSZip==='undefined')throw Error('ZIP library did not load. Refresh the page and try again.');
+    const response=await fetch(c.url,{cache:'no-cache'});
+    if(!response.ok)throw Error('Character ZIP download failed: HTTP '+response.status);
+    const zip=await JSZip.loadAsync(await response.arrayBuffer());
+    const file=zip.file(c.modelPath);
+    if(!file)throw Error('Model path not found in ZIP: '+c.modelPath);
+    const blob=await file.async('blob');
+    if(token!==loadToken)return;
+    currentObjectUrl=URL.createObjectURL(new Blob([blob],{type:'model/gltf-binary'}));
+    modelUrl=currentObjectUrl;
+   }else if(c.source==='glb'){
+    modelUrl=c.modelPath;
+   }else{
+    throw Error('Unsupported character source. Use zip or glb.');
+   }
+   if(token!==loadToken)return;
+   const onLoad=()=>{
+    if(token!==loadToken)return;
+    const clips=viewer.availableAnimations||[];
+    animationSelect.innerHTML='';
+    animationSelect.add(new Option(clips.length?'Select animation…':'No animations found',''));
+    clips.forEach(n=>animationSelect.add(new Option(n,n)));
+    animationSelect.disabled=clips.length===0;
+    setStatus(c.name+' loaded · '+clips.length+' animation clips detected.');
+   };
+   const onError=()=>{
+    if(token!==loadToken)return;
+    setStatus('Could not render '+c.name+'. The GLB may be invalid or unsupported.');
+   };
+   viewer.addEventListener('load',onLoad,{once:true});
+   viewer.addEventListener('error',onError,{once:true});
+   viewer.src=modelUrl;
+  }catch(e){
+   if(token===loadToken)setStatus('Preview error: '+e.message);
   }
-  viewer.addEventListener('load',function onLoad(){
-   const clips=viewer.availableAnimations||[];animationSelect.innerHTML='';
-   animationSelect.add(new Option(clips.length?'Select animation…':'No animations found',''));
-   clips.forEach(n=>animationSelect.add(new Option(n,n)));
-   setStatus(c.name+' loaded · '+clips.length+' animation clips detected.');
-  },{once:true});
-  viewer.addEventListener('error',function onError(){setStatus('Could not render '+c.name+'. Check that its GLB file is valid.');},{once:true});
- }catch(e){setStatus('Preview error: '+e.message)}
-}
-(async()=>{try{const r=await fetch('./characters.json');if(!r.ok)throw Error('Could not load characters.json');const data=await r.json();characters=data.characters||[];if(!characters.length)throw Error('No characters have been added yet.');characterSelect.innerHTML='';characters.forEach((c,i)=>characterSelect.add(new Option(c.name,c.id,i===0,i===0)));characterSelect.onchange=()=>{const c=characters.find(x=>x.id===characterSelect.value);if(c)loadCharacter(c)};await loadCharacter(characters[0]);}catch(e){setStatus('Gallery setup error: '+e.message)}})();
-document.querySelector('#rotate').onclick=()=>{viewer.autoRotate=!viewer.autoRotate;document.querySelector('#rotate').textContent='AUTO ROTATE: '+(viewer.autoRotate?'ON':'OFF')};
-document.querySelector('#reset').onclick=()=>{viewer.cameraOrbit='0deg 75deg 3.2m';viewer.fieldOfView='30deg';viewer.jumpCameraToGoal()};
-document.querySelector('#play').onclick=()=>{const n=animationSelect.value||animationSelect.options[1]?.value;if(n){animationSelect.value=n;viewer.animationName=n;viewer.play()}};
-document.querySelector('#pause').onclick=()=>viewer.pause();
-animationSelect.onchange=()=>{if(animationSelect.value){viewer.animationName=animationSelect.value;viewer.play()}};
-</script></body></html>
+ }
+ try{
+  await customElements.whenDefined('model-viewer');
+  if(typeof JSZip==='undefined')throw Error('ZIP library did not load. Check your internet connection and refresh.');
+  const response=await fetch('./characters.json',{cache:'no-cache'});
+  if(!response.ok)throw Error('Character list could not load: HTTP '+response.status);
+  const data=await response.json();
+  characters=Array.isArray(data.characters)?data.characters:[];
+  if(!characters.length)throw Error('No characters have been added yet.');
+  characterSelect.innerHTML='';
+  characters.forEach((c,i)=>characterSelect.add(new Option(c.name,c.id,i===0,i===0)));
+  characterSelect.disabled=false;
+  characterSelect.addEventListener('change',()=>{
+   const c=characters.find(x=>x.id===characterSelect.value);
+   if(c)loadCharacter(c);
+  });
+  await loadCharacter(characters[0]);
+ }catch(e){setStatus('Gallery setup error: '+e.message)}
+ rotateButton.addEventListener('click',()=>{
+  viewer.autoRotate=!viewer.autoRotate;
+  rotateButton.textContent='AUTO ROTATE: '+(viewer.autoRotate?'ON':'OFF');
+ });
+ document.querySelector('#reset').addEventListener('click',()=>{
+  viewer.cameraOrbit='0deg 75deg 3.2m';
+  viewer.fieldOfView='30deg';
+  viewer.jumpCameraToGoal();
+ });
+ document.querySelector('#play').addEventListener('click',()=>{
+  const n=animationSelect.value||animationSelect.options[1]?.value;
+  if(n){animationSelect.value=n;viewer.animationName=n;viewer.play()}
+ });
+ document.querySelector('#pause').addEventListener('click',()=>viewer.pause());
+ animationSelect.addEventListener('change',()=>{
+  if(animationSelect.value){viewer.animationName=animationSelect.value;viewer.play()}
+ });
+ window.addEventListener('pagehide',revokeModelUrl,{once:true});
+})();
+</script>
+</body>
+</html>
