@@ -66,7 +66,7 @@
      const dv=new DataView(modelBytes.buffer,modelBytes.byteOffset,modelBytes.byteLength);
      const jsonLen=dv.getUint32(12,true), jsonEnd=20+jsonLen;
      if(dv.getUint32(4,true)!==2 || dv.getUint32(16,true)!==0x4e4f534a || jsonEnd>modelBytes.length)throw Error('Invalid GLB JSON chunk');
-     const jsonText=new TextDecoder().decode(modelBytes.slice(20,jsonEnd)).replace(/\\0+$/g,'').trimEnd();
+     const jsonText=new TextDecoder().decode(modelBytes.slice(20,jsonEnd)).replace(/\0+$/g,'').trimEnd();
      const doc=JSON.parse(jsonText);
      const binHeader=jsonEnd;
      if(binHeader+8>modelBytes.length)throw Error('GLB binary chunk is missing');
