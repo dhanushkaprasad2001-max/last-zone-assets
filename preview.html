@@ -16,7 +16,7 @@
 <main>
 <section class="stage">
 <div class="hud"><div class="sub" id="role">OPERATIVE</div><div class="name" id="name">LOADING</div></div>
-<model-viewer id="viewer" camera-controls touch-action="pan-y" interaction-prompt="auto" auto-rotate rotation-per-second="18deg" shadow-intensity="1" exposure="1" environment-image="neutral" camera-orbit="0deg 75deg 3.2m" min-camera-orbit="auto 20deg auto" max-camera-orbit="auto 150deg auto" field-of-view="30deg" alt="LAST ZONE 3D character preview"></model-viewer>
+<model-viewer id="viewer" camera-controls touch-action="pan-y" interaction-prompt="auto" auto-rotate rotation-per-second="18deg" shadow-intensity="1" exposure="1" environment-image="neutral" camera-orbit="auto auto auto" camera-target="auto auto auto" min-camera-orbit="auto 20deg auto" max-camera-orbit="auto 150deg auto" field-of-view="auto" alt="LAST ZONE 3D character preview"></model-viewer>
 <div class="cross">DRAG TO ROTATE · PINCH TO ZOOM</div>
 </section>
 <section class="panel">
@@ -119,9 +119,11 @@
     animationSelect.disabled=clips.length===0;
     setStatus(c.name+' loaded · '+clips.length+' animation clips detected.');
    };
-   const onError=()=>{
+   const onError=(event)=>{
     if(token!==loadToken)return;
-    setStatus('Could not render '+c.name+'. The GLB may be invalid or unsupported.');
+    const detail=event&&event.detail&&event.detail.message?event.detail.message:'No detailed error supplied by model-viewer';
+    console.error('LAST ZONE model render failure:',c.name,detail,event);
+    setStatus('Could not render '+c.name+': '+detail);
    };
    viewer.addEventListener('load',onLoad,{once:true});
    viewer.addEventListener('error',onError,{once:true});
@@ -152,8 +154,9 @@
   rotateButton.textContent='AUTO ROTATE: '+(viewer.autoRotate?'ON':'OFF');
  });
  document.querySelector('#reset').addEventListener('click',()=>{
-  viewer.cameraOrbit='0deg 75deg 3.2m';
-  viewer.fieldOfView='30deg';
+  viewer.cameraOrbit='auto auto auto';
+  viewer.cameraTarget='auto auto auto';
+  viewer.fieldOfView='auto';
   viewer.jumpCameraToGoal();
  });
  document.querySelector('#play').addEventListener('click',()=>{
