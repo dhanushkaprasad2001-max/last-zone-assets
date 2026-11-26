@@ -95,8 +95,8 @@
      const paddedBinLen=Math.ceil(binLen/4)*4;
      const total=12+8+paddedJsonLen+8+paddedBinLen;
      const repaired=new Uint8Array(total), out=new DataView(repaired.buffer);
-     repaired.set([0x67,0x6c,0x54,0x46],0); out.setUint32(4,total,true);
-     out.setUint32(8,2,true); out.setUint32(12,paddedJsonLen,true); out.setUint32(16,0x4e4f534a,true);
+     repaired.set([0x67,0x6c,0x54,0x46],0); out.setUint32(4,2,true);
+     out.setUint32(8,total,true); out.setUint32(12,paddedJsonLen,true); out.setUint32(16,0x4e4f534a,true);
      repaired.set(jsonBytes,20); repaired.fill(0x20,20+jsonBytes.length,20+paddedJsonLen);
      const binHead=20+paddedJsonLen; out.setUint32(binHead,paddedBinLen,true); out.setUint32(binHead+4,0x004e4942,true);
      repaired.set(modelBytes.slice(binStart,binStart+binLen),binHead+8);
