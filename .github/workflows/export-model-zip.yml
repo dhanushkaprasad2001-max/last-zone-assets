@@ -1,9 +1,9 @@
-name: Export 3D model ZIP
+name: Export NERO model ZIP
 on:
   push:
     paths:
       - '.github/workflows/export-model-zip.yml'
-      - 'game-LAST-ZONE-COD-Pack.zip'
+      - 'Nero new.zip'
   workflow_dispatch:
 permissions:
   contents: read
@@ -15,15 +15,15 @@ jobs:
         uses: actions/checkout@v4
       - name: Verify model archive
         run: |
-          test -s game-LAST-ZONE-COD-Pack.zip
-          file game-LAST-ZONE-COD-Pack.zip
-          unzip -t game-LAST-ZONE-COD-Pack.zip
+          test -s "Nero new.zip"
+          file "Nero new.zip"
+          unzip -t "Nero new.zip"
       - name: List archive contents
-        run: unzip -Z1 game-LAST-ZONE-COD-Pack.zip
+        run: unzip -Z1 "Nero new.zip"
       - name: Upload original model archive
         uses: actions/upload-artifact@v4
         with:
-          name: nero-cod-model-source
-          path: game-LAST-ZONE-COD-Pack.zip
+          name: nero-new-model-source
+          path: "Nero new.zip"
           if-no-files-found: error
           retention-days: 7
