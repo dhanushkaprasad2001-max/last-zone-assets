@@ -125,7 +125,7 @@ open(os.path.join(docs,"Blender_Test_Report.txt"),"w").write(
 "- Main NERO GLB imported successfully with mesh, armature and animation actions.\n"
 "- GLB JSON chunk padding repaired to valid space padding where required.\n"
 "- Main character FBX re-exported from the imported GLB.\n"
-"- Separate tactical rifle mesh generated and exported as GLB and FBX.\n"
+- Separate tactical rifle mesh generated and exported as GLB.\n
 "- LOD0/LOD1/LOD2 are preserved as distinct GLB assets; import must be revalidated in the follow-up workflow.\n"
 "- Unity runtime, retargeting, in-game ADS alignment, deformation quality and Android performance are NOT certified by this Blender batch.\n")
 open(os.path.join(docs,"Known_Issues.txt"),"w").write(
