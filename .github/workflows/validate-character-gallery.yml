@@ -100,14 +100,41 @@ jobs:
           node - <<'JS'
           const fs = require('fs');
           const validator = require('gltf-validator');
-          const bytes = new Uint8Array(fs.readFileSync('/tmp/character.glb'));
+          const raw = fs.readFileSync('/tmp/character.glb');
+          const dv = new DataView(raw.buffer, raw.byteOffset, raw.byteLength);
+          const jsonLen = dv.getUint32(12, true), jsonEnd = 20 + jsonLen;
+          const doc = JSON.parse(raw.subarray(20, jsonEnd).toString('utf8').replace(/\\0+$/g, '').trimEnd());
+          const binLen = dv.getUint32(jsonEnd, true), binStart = jsonEnd + 8;
+          for (const mesh of (doc.meshes || [])) for (const prim of (mesh.primitives || [])) {
+            const ai = prim.attributes && prim.attributes.POSITION;
+            if (ai === undefined) continue;
+            const a = doc.accessors[ai];
+            if (a.min && a.max) continue;
+            if (a.componentType !== 5126 || a.type !== 'VEC3') throw new Error('Unsupported POSITION accessor');
+            const bv = doc.bufferViews[a.bufferView], stride = bv.byteStride || 12;
+            const start = binStart + (bv.byteOffset || 0) + (a.byteOffset || 0);
+            const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
+            for (let n = 0; n < a.count; n++) for (let k = 0; k < 3; k++) {
+              const v = dv.getFloat32(start + n * stride + k * 4, true);
+              if (!Number.isFinite(v)) throw new Error('Invalid POSITION vertex');
+              min[k] = Math.min(min[k], v); max[k] = Math.max(max[k], v);
+            }
+            a.min = min; a.max = max;
+          }
+          const json = Buffer.from(JSON.stringify(doc), 'utf8');
+          const jsonPad = Math.ceil(json.length / 4) * 4, binPad = Math.ceil(binLen / 4) * 4;
+          const out = Buffer.alloc(12 + 8 + jsonPad + 8 + binPad);
+          out.write('glTF', 0); out.writeUInt32LE(out.length, 4); out.writeUInt32LE(2, 8);
+          out.writeUInt32LE(jsonPad, 12); out.writeUInt32LE(0x4e4f534a, 16);
+          json.copy(out, 20, 0); out.fill(0x20, 20 + json.length, 20 + jsonPad);
+          const binHead = 20 + jsonPad; out.writeUInt32LE(binPad, binHead); out.writeUInt32LE(0x004e4942, binHead + 4);
+          raw.copy(out, binHead + 8, binStart, binStart + binLen);
+          fs.writeFileSync('/tmp/character.glb', out);
+          const bytes = new Uint8Array(out);
           validator.validateBytes(bytes, {uri: 'character.glb'}).then(report => {
             console.log(JSON.stringify(report.issues, null, 2));
             console.log('Khronos glTF validation errors:', report.issues.numErrors);
             console.log('Khronos glTF validation warnings:', report.issues.numWarnings);
             if (report.issues.numErrors > 0) process.exit(1);
-          }).catch(error => {
-            console.error(error);
-            process.exit(1);
-          });
+          }).catch(error => { console.error(error); process.exit(1); });
           JS
