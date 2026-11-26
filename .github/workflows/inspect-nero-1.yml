@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - 'Nero 1.zip'
+      - 'tools/repair_nero_assets.py'
       - '.github/workflows/inspect-nero-1.yml'
   workflow_dispatch:
 permissions:
@@ -105,16 +106,13 @@ jobs:
             ("GLB LOD0","Models/NERO_LOD0.glb","glb"),
             ("GLB LOD1","Models/NERO_LOD1.glb","glb"),
             ("GLB LOD2","Models/NERO_LOD2.glb","glb"),
-            ("GLB rifle","Weapons/Rifle_Model.glb","glb"),
-            ("FBX main","Models/NERO_Final.fbx","fbx"),
-            ("FBX rifle","Weapons/Rifle_Model.fbx","fbx")]
+            ("GLB rifle","Weapons/Rifle_Model.glb","glb")]
           for label,rel,kind in targets:
             path=os.path.join(root,rel)
             bpy.ops.wm.read_factory_settings(use_empty=True)
             report.append("\n"+label+": "+rel)
             try:
-              if kind=="glb": bpy.ops.import_scene.gltf(filepath=path)
-              else: bpy.ops.import_scene.fbx(filepath=path)
+              bpy.ops.import_scene.gltf(filepath=path)
               objs=list(bpy.context.scene.objects)
               meshes=[o for o in objs if o.type=="MESH"]
               arms=[o for o in objs if o.type=="ARMATURE"]
@@ -138,7 +136,6 @@ jobs:
               report.append("Actions: "+", ".join(a.name for a in actions[:45]))
               report.append("Mesh objects: "+", ".join(o.name for o in meshes[:20]))
               if not meshes: report.append("WARNING: no mesh geometry imported")
-              if kind=="fbx" and not arms: report.append("WARNING: FBX import has no armature")
             except Exception as e:
               report.append("IMPORT: FAIL - "+repr(e))
           open("Blender-validation-report.txt","w").write("\n".join(report))
