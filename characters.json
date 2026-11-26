@@ -1,12 +1,12 @@
 {
   "characters": [
     {
-      "id": "nero-2",
-      "name": "NERO 2",
-      "role": "OPERATIVE · FIXED MODEL",
+      "id": "nero",
+      "name": "NERO",
+      "role": "OPERATIVE · ORIGINAL MODEL",
       "source": "zip",
-      "url": "https://raw.githubusercontent.com/dhanushkaprasad2001-max/last-zone-assets/main/%20Nero%202.zip",
-      "modelPath": "NERO_FINAL_FIXED/Models/nero_V5_FIXED.glb"
+      "url": "https://raw.githubusercontent.com/dhanushkaprasad2001-max/last-zone-assets/main/Nero.zip",
+      "modelPath": "NERO_FINAL/nero.glb"
     }
   ]
 }
