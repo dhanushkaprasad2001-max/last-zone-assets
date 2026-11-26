@@ -1,0 +1,99 @@
+name: Inspect NERO 1 model ZIP
+on:
+  push:
+    paths:
+      - 'Nero 1.zip'
+      - '.github/workflows/inspect-nero-1.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect-model:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out assets
+        uses: actions/checkout@v4
+      - name: Inspect ZIP and model files
+        run: |
+          set -e
+          test -s "Nero 1.zip"
+          python3 - <<'PY'
+          import zipfile, os, json, struct, hashlib
+          from collections import Counter
+          p = "Nero 1.zip"
+          out = ["NERO 1 ZIP INSPECTION REPORT", "="*32]
+          out.append(f"Archive size: {os.path.getsize(p):,} bytes")
+          try:
+              z = zipfile.ZipFile(p)
+              bad = z.testzip()
+              out.append("ZIP integrity: PASS" if bad is None else f"ZIP integrity: FAIL at {bad}")
+              infos = z.infolist()
+              out.append(f"File entries: {len(infos)}")
+              for i in infos:
+                  out.append(f"{i.file_size:>12,} bytes  {i.filename}")
+              names = [i.filename for i in infos if not i.is_dir()]
+              glbs = [n for n in names if n.lower().endswith('.glb')]
+              fbxs = [n for n in names if n.lower().endswith('.fbx')]
+              images = [n for n in names if n.lower().endswith(('.png','.jpg','.jpeg','.tga','.webp'))]
+              out.append(f"\nGLB files: {len(glbs)} | FBX files: {len(fbxs)} | image textures: {len(images)}")
+              hashes = {}
+              for n in names:
+                  base = os.path.basename(n).lower()
+                  if 'lod' in base or base.endswith('.glb'):
+                      hashes[n] = hashlib.sha256(z.read(n)).hexdigest()
+              lod_groups = {}
+              for n,h in hashes.items():
+                  key = os.path.basename(n).lower().replace('lod0','lodX').replace('lod1','lodX').replace('lod2','lodX')
+                  lod_groups.setdefault(key, []).append((n,h))
+              for k, vals in lod_groups.items():
+                  if len(vals)>1:
+                      out.append("LOD hash comparison: " + ("IDENTICAL files detected" if len(set(h for _,h in vals))==1 else "Different file hashes") + " :: " + ", ".join(n for n,_ in vals))
+              for n in glbs:
+                  b=z.read(n); out.append(f"\nGLB ANALYSIS: {n}")
+                  if len(b)<20 or b[:4]!=b'glTF':
+                      out.append("GLB header: INVALID"); continue
+                  version,total=struct.unpack_from('<II',b,4)
+                  out.append(f"GLB header: valid magic | version={version} | declared_length={total} | actual_length={len(b)}")
+                  pos=12; doc=None; bin_chunks=[]
+                  while pos+8<=len(b):
+                      ln,typ=struct.unpack_from('<II',b,pos); pos+=8
+                      chunk=b[pos:pos+ln]; pos+=ln
+                      if typ==0x4E4F534A:
+                          try: doc=json.loads(chunk.decode('utf-8').rstrip(' \t\r\n\0'))
+                          except Exception as e: out.append(f"JSON chunk parse error: {e}")
+                      elif typ==0x004E4942: bin_chunks.append(len(chunk))
+                  if doc:
+                      out.append(f"Meshes={len(doc.get('meshes',[]))}, nodes={len(doc.get('nodes',[]))}, skins={len(doc.get('skins',[]))}, animations={len(doc.get('animations',[]))}, materials={len(doc.get('materials',[]))}, images={len(doc.get('images',[]))}, textures={len(doc.get('textures',[]))}")
+                      out.append(f"Embedded BIN chunk bytes: {bin_chunks}")
+                      for si,s in enumerate(doc.get('skins',[])):
+                          out.append(f"Skin {si}: joints={len(s.get('joints',[]))}")
+                      for ai,a in enumerate(doc.get('animations',[])):
+                          out.append(f"Animation {ai+1}: {a.get('name','(unnamed)')} | samplers={len(a.get('samplers',[]))} | channels={len(a.get('channels',[]))}")
+                      for mi,m in enumerate(doc.get('meshes',[])):
+                          for pi,pr in enumerate(m.get('primitives',[])):
+                              out.append(f"Mesh {mi} primitive {pi}: attributes={list(pr.get('attributes',{}).keys())} | indices={pr.get('indices')} | material={pr.get('material')}")
+              for n in fbxs:
+                  b=z.read(n); out.append(f"\nFBX: {n} | {len(b):,} bytes | header={b[:23]!r}")
+                  out.append("FBX format: " + ("binary FBX signature detected" if b.startswith(b'Kaydara FBX Binary') else "ASCII/text FBX candidate" if b'FBX' in b[:256] or b'Objects:' in b[:2048] else "Unrecognized FBX header"))
+              out.append("\nNOTE: Structural inspection only. Blender/Unity import, rig deformation, animation playback, materials, and Android performance require application-level testing.")
+          except Exception as e:
+              out.append(f"INSPECTION FAILED: {type(e).__name__}: {e}")
+              raise
+          report="\n".join(out)
+          print(report)
+          open("Nero-1-inspection-report.txt","w").write(report)
+          PY
+      - name: Upload inspection report
+        uses: actions/upload-artifact@v4
+        with:
+          name: nero-1-inspection-report
+          path: Nero-1-inspection-report.txt
+          if-no-files-found: error
+          retention-days: 7
+      - name: Upload original ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: nero-1-model-source
+          path: 'Nero 1.zip'
+          if-no-files-found: error
+          retention-days: 7
