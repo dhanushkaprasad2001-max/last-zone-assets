@@ -6,7 +6,7 @@ on:
       - '.github/workflows/inspect-nero-1.yml'
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   inspect-model:
     runs-on: ubuntu-latest
@@ -89,10 +89,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y blender python3-numpy
           blender --background --python-expr "import numpy; print('Blender NumPy:', numpy.__version__)"
+          blender --background --python repair_nero_assets.py 2>&1 | tee repair-run.log
           mkdir -p extracted
           python3 - <<'PY'
           import zipfile
-          with zipfile.ZipFile("Nero 1.zip") as z:
+          with zipfile.ZipFile("Nero 1 REPAIRED.zip") as z:
               z.extractall("extracted")
           PY
           cat > blender_check.py <<'PY'
@@ -145,6 +146,22 @@ jobs:
           PY
           blender --background --python blender_check.py 2>&1 | tee blender-run.log
           cat Blender-validation-report.txt >> Nero-1-inspection-report.txt
+      - name: Upload repaired model ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: nero-1-repaired-model
+          path: 'Nero 1 REPAIRED.zip'
+          if-no-files-found: error
+          retention-days: 30
+      - name: Commit repaired ZIP to repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Nero 1 REPAIRED.zip"
+          if ! git diff --cached --quiet; then
+            git commit -m "Add repaired NERO 1 model package"
+            git push
+          fi
       - name: Upload Blender validation report
         uses: actions/upload-artifact@v4
         with:
