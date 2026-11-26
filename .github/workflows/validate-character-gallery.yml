@@ -32,7 +32,7 @@ jobs:
           python3 - <<'PY'
           import re
           html = open("preview.html", encoding="utf-8").read()
-          scripts = re.findall(r"<script>([\\s\\S]*?)</script>", html, re.I)
+          scripts = re.findall(r"<script>(.*?)</script>", html, re.I | re.S)
           if not scripts:
               raise SystemExit("FAIL: inline gallery JavaScript was not found")
           open("/tmp/gallery.js", "w", encoding="utf-8").write(scripts[-1])
