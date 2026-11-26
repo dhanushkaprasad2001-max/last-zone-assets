@@ -82,7 +82,7 @@ jobs:
               chunk_len, chunk_type = struct.unpack_from("<II", data, 12)
               if chunk_type != 0x4E4F534A or 20 + chunk_len > len(data):
                   raise SystemExit(f"FAIL: {c['name']} GLB JSON chunk is invalid")
-              open("/tmp/character.glb", "wb").write(data)
+              chunk = data[20:20+chunk_len]\n              print("JSON CHUNK END CONTEXT:", repr(chunk[37750:37880]))\n              print("JSON CHUNK SIZE:", len(chunk))\n              open("/tmp/character.glb", "wb").write(data)
               print(f"PASS: {c['name']} | GLB v{version} | bytes={len(data)}")
           print(f"PASS: all {len(chars)} character entries passed binary header checks")
           PY
