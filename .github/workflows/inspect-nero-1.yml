@@ -85,11 +85,11 @@ jobs:
           PY
       - name: Blender application-level import and rig checks
         run: |
-          set -e
+          set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y blender python3-numpy
           blender --background --python-expr "import numpy; print('Blender NumPy:', numpy.__version__)"
-          blender --background --python repair_nero_assets.py 2>&1 | tee repair-run.log
+          blender --background --python tools/repair_nero_assets.py 2>&1 | tee repair-run.log
           mkdir -p extracted
           python3 - <<'PY'
           import zipfile
