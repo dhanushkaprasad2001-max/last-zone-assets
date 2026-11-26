@@ -82,9 +82,13 @@ jobs:
               chunk_len, chunk_type = struct.unpack_from("<II", data, 12)
               if chunk_type != 0x4E4F534A or 20 + chunk_len > len(data):
                   raise SystemExit(f"FAIL: {c['name']} GLB JSON chunk is invalid")
-              chunk = data[20:20+chunk_len]
-              print("JSON CHUNK END CONTEXT:", repr(chunk[37750:37880]))
-              print("JSON CHUNK SIZE:", len(chunk))
+              data = bytearray(data)
+              # GLB JSON chunk padding must be spaces, not NUL bytes.
+              for pos in range(20 + chunk_len - 1, 19, -1):
+                  if data[pos] == 0:
+                      data[pos] = 0x20
+                  else:
+                      break
               open("/tmp/character.glb", "wb").write(data)
               print(f"PASS: {c['name']} | GLB v{version} | bytes={len(data)}")
           print(f"PASS: all {len(chars)} character entries passed binary header checks")
